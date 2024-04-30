@@ -23,6 +23,41 @@
       journald_rate_limit_interval_sec: 0
       journald_rate_limit_burst: 0
 
+  - name: Shell environment config
+    copy:
+      content: |
+        shopt -s histappend
+        eval "$(direnv hook bash)"
+        alias v="vim -v"
+        alias vi="vim -v"
+        alias vim="vim -v"
+        alias g="git"
+        alias gd="git diff"
+        alias gg="clear && git status -sb"
+        alias hh=' history -a; history -n'
+        alias qq="cd ~/1Download"
+        alias ww="cd ~/work"
+        alias cdn='cd $(ls -c | head -n1)'
+        alias dnf="sudo dnf"
+        alias ys="sudo dnf search"
+        alias yi="sudo dnf install"
+        alias yyi="sudo dnf -y install"
+        alias yu="sudo dnf upgrade"
+        alias yyu="sudo dnf -y upgrade"
+        alias yr="sudo dnf remove"
+        alias yyr="sudo dnf -y remove"
+        alias ypr="sudo dnf whatprovides"
+        alias vim-bashrc="vim ~/.bashrc; source ~/.bashrc"
+        alias vim-bashprofile="vim ~/.bash_profile; source ~/.bash_profile"
+        alias vim-vimrc="vim ~/.vimrc"
+      dest: /etc/profile.d/lzap
+
+  - name: Download dancepill
+    ansible.builtin.get_url:
+      url: https://raw.githubusercontent.com/lzap/dancepill/master/dancepill
+      dest: /usr/local/bin/e
+      mode: '0777'
+
   - name: Sudoers
     copy:
       content: |
@@ -43,6 +78,10 @@
         - vim-enhanced
         - mosh
         - tuned
+        - autojump
+        - direnv
+        - git-xcleaner
+        - the_silver_searcher
       state: latest
 
   - name: Tuned guest profile
