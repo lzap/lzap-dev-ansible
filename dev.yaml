@@ -1,0 +1,70 @@
+- name: Development setup
+  hosts: all
+
+  tasks:
+  - name: Permit root login via keys
+    copy:
+      content: "PermitRootLogin prohibit-password"
+      dest: /etc/ssh/sshd_config.d/prohibit-root-password
+
+  - name: SELinux
+    import_role:
+      name: fedora.linux_system_roles.selinux
+    vars:
+      selinux_state: disabled
+
+  - name: Volatile journal
+    import_role:
+      name: fedora.linux_system_roles.journald
+    vars:
+      journald_persistent: false
+      journald_max_disk_size: 16
+      journald_forward_to_syslog: false
+      journald_rate_limit_interval_sec: 0
+      journald_rate_limit_burst: 0
+
+  - name: Sudoers
+    copy:
+      content: |
+        Defaults editor=/usr/bin/vim
+        Cmnd_Alias SOFTWARE = /usr/bin/dnf
+        Cmnd_Alias NETWORKING = /usr/bin/ping, /usr/bin/socat
+        Cmnd_Alias SERVICES = /usr/bin/nohup, /usr/bin/systemctl, /usr/bin/journalctl, /usr/bin/resolvectl, /usr/bin/firewall-cmd
+        Cmnd_Alias LOCATE = /usr/bin/updatedb
+        Cmnd_Alias STORAGE = /usr/sbin/fstrim, /usr/bin/mount, /usr/bin/umount, /usr/sbin/auditctl, /usr/sbin/smartctl
+        Cmnd_Alias PROCESSES = /usr/bin/nice, /usr/bin/kill, /usr/bin/kill, /usr/bin/killall, /usr/bin/pkill
+        Cmnd_Alias DEVELOPMENT = /usr/bin/podman, /usr/sbin/lvcreate, /usr/sbin/dmidecode
+        lzap ALL=(ALL) NOPASSWD: SOFTWARE,NETWORKING,SERVICES,LOCATE,PROCESSES,DEVELOPMENT,STORAGE
+      dest: /etc/sudoers.d/lzap
+
+  - name: Essential packages
+    ansible.builtin.package:
+      name:
+        - vim-enhanced
+        - mosh
+        - tuned
+      state: latest
+
+  - name: Tuned guest profile
+    import_role:
+      name: linux-system-roles.tuned
+    vars:
+      profile: virtual-guest
+
+  - name: Cockpit
+    import_role:
+      name: fedora.linux_system_roles.cockpit
+    vars:
+      cockpit_packages:
+        - cockpit
+        - cockpit-podman
+
+  - name: Firewall
+    import_role:
+      name: fedora.linux_system_roles.firewall
+    vars:
+      firewall:
+        service:
+          - cockpit
+          - mosh
+        state: enabled
