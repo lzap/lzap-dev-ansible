@@ -35,6 +35,6 @@ To execute the playbook:
 
     ANSIBLE_DISPLAY_SKIPPED_HOSTS=false ANSIBLE_DISPLAY_OK_HOSTS=false ansible-playbook -i root@dev.home.lan, dev.yaml
 
-== TODO
+== LICENSE
 
-Entering password - variable
+Public domain.
