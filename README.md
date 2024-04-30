@@ -1,4 +1,4 @@
-= lzap's Fedora dev setup
+# lzap's Fedora dev setup
 
 Ansible playbook for setting up my Fedora development box. Probably not very
 useful to you.
@@ -8,7 +8,7 @@ This is only tested on Fedora both as an Ansible host and target system.
 Warning: This playbook does some things which are not recommended for
 production or real use like turning off SELinux or in-memory only journal.
 
-== How to use this
+## How to use this
 
 On the Ansible host:
 
@@ -35,6 +35,6 @@ To execute the playbook:
 
     ANSIBLE_DISPLAY_SKIPPED_HOSTS=false ANSIBLE_DISPLAY_OK_HOSTS=false ansible-playbook -i root@dev.home.lan, dev.yaml
 
-== LICENSE
+## LICENSE
 
 Public domain.
