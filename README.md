@@ -35,6 +35,12 @@ To execute the playbook:
 
     ANSIBLE_DISPLAY_SKIPPED_HOSTS=false ANSIBLE_DISPLAY_OK_HOSTS=false ansible-playbook -i root@dev.home.lan, dev.yaml
 
+## Private assets
+
+This public Ansible playbook does not contain any sensitive data, here are few commands which I need to run manually. SSH keys:
+
+    scp $HOME/.ssh/{id_ed25519,id_rsa,fedorapeople_rsa}{,.pub} lzap@dev.home.lan:.ssh
+
 ## LICENSE
 
 Public domain.

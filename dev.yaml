@@ -38,19 +38,137 @@
         alias qq="cd ~/1Download"
         alias ww="cd ~/work"
         alias cdn='cd $(ls -c | head -n1)'
-        alias dnf="sudo dnf"
-        alias ys="sudo dnf search"
-        alias yi="sudo dnf install"
-        alias yyi="sudo dnf -y install"
-        alias yu="sudo dnf upgrade"
-        alias yyu="sudo dnf -y upgrade"
-        alias yr="sudo dnf remove"
-        alias yyr="sudo dnf -y remove"
-        alias ypr="sudo dnf whatprovides"
+        alias dnf="sudo /usr/bin/dnf"
+        alias ys="sudo /usr/bin/dnf search"
+        alias yi="sudo /usr/bin/dnf install"
+        alias yyi="sudo /usr/bin/dnf -y install"
+        alias yu="sudo /usr/bin/dnf upgrade"
+        alias yyu="sudo /usr/bin/dnf -y upgrade"
+        alias yr="sudo /usr/bin/dnf remove"
+        alias yyr="sudo /usr/bin/dnf -y remove"
+        alias ypr="sudo /usr/bin/dnf whatprovides"
+        alias journalctl="sudo /usr/bin/journalctl"
         alias vim-bashrc="vim ~/.bashrc; source ~/.bashrc"
         alias vim-bashprofile="vim ~/.bash_profile; source ~/.bash_profile"
         alias vim-vimrc="vim ~/.vimrc"
-      dest: /etc/profile.d/lzap
+      dest: /etc/profile.d/lzap.sh
+
+  - name: Bash profile drop dir
+    ansible.builtin.file:
+      path: /home/lzap/.bashrc.d
+      state: directory
+      owner: lzap
+      group: lzap
+      mode: '0755'
+
+  - name: Bash profile - Go
+    copy:
+      content: |
+        if [[ -e /home/lzap/go/bin ]]; then
+          export PATH=/home/lzap/go/bin:$PATH
+        fi
+      dest: /home/lzap/.bashrc.d/go.sh
+      owner: lzap
+      group: lzap
+
+  - name: Editor config
+    copy:
+      content: |
+        root = true
+        [*]
+        insert_final_newline = true
+        charset = utf-8
+        trim_trailing_whitespace = true
+        indent_style = space
+        indent_size = 2
+        [{Makefile,go.mod,go.sum,*.go,.gitmodules}]
+        indent_style = tab
+        indent_size = 4
+        [*.md]
+        indent_size = 4
+        trim_trailing_whitespace = false
+        eclint_indent_style = unset
+        [Dockerfile]
+        indent_size = 4
+      dest: /home/lzap/.editorconfig
+      owner: lzap
+      group: lzap
+
+  - name: Git ignore
+    copy:
+      content: |
+        /.misc
+        /.vscode
+        /.fleet
+        /.idea
+        /.noverify
+        /.editorconfig
+        TAGS
+        tags
+      dest: /home/lzap/.gitignore
+      owner: lzap
+      group: lzap
+
+  - name: Git config
+    copy:
+      content: |
+        [user]
+        name = Lukas Zapletal
+        email = lzap+git@redhat.com
+        [core]
+        excludesfile = /home/lzap/.gitignore
+        [clone]
+        defaultRemoteName = upstream
+        [pull]
+        ff = only
+        [push]
+        default = current
+        autoSetupRemote = true
+        followTags = true
+        [color]
+        diff = auto
+        status = auto
+        branch = auto
+        [apply]
+        whitespace = strip
+        [alias]
+        cam = commit -am
+        ca = commit -a
+        co = checkout
+        st = status
+        br = branch -v
+        ls = log --pretty=format:"%C(yellow)%h%d\\ %Creset%s%Cblue\\ (%an\\ %cr)"
+        fall = fetch --all
+        unstage = reset HEAD --
+        find = !sh -c 'git ls-tree -r --name-only HEAD | grep --color $1' -
+        fshow = ! sh -c 'echo $(git diff --name-only HEAD~ HEAD)' -
+        vim = ! sh -c 'vim `git fshow $1`' -
+        [diff]
+        tool = vim
+        [diff "vim"]
+        cmd = vimdiff "$LOCAL" "$REMOTE"
+        [init]
+        defaultBranch = main
+        [http]
+        cookiefile = /home/lzap/.gitcookies
+        [mergetool]
+        keepBackup = false
+        [merge]
+        tool = vimtabs
+        keepBackup = false
+        prompt = false
+        [mergetool "vimtabs"]
+        cmd = vim -f -c \"tabe $BASE\" -c \"diffsplit $LOCAL\" -c \"tabe $BASE\" -c \"diffsplit $REMOTE\" -c tabfirst -c \"/=======\" -c \"normal gg\" \"$MERGED\"
+        [mergetool "vim"]
+        cmd = vimdiff "$LOCAL" "$MERGED" "$REMOTE"
+        [mergetool "vim3"]
+        cmd = /usr/bin/vim -f -d \"$LOCAL\" \"$BASE\" \"$REMOTE\" \"$MERGED\"
+        [mergetool "fugitive"]
+        cmd = vim -f -c \"Gdiff\" \"$MERGED\"
+        trustExitCode = false
+      dest: /home/lzap/.gitconfig
+      owner: lzap
+      group: lzap
 
   - name: Download dancepill
     ansible.builtin.get_url:
@@ -62,33 +180,80 @@
     copy:
       content: |
         Defaults editor=/usr/bin/vim
+        Defaults timestamp_timeout=300
         Cmnd_Alias SOFTWARE = /usr/bin/dnf
         Cmnd_Alias NETWORKING = /usr/bin/ping, /usr/bin/socat
         Cmnd_Alias SERVICES = /usr/bin/nohup, /usr/bin/systemctl, /usr/bin/journalctl, /usr/bin/resolvectl, /usr/bin/firewall-cmd
         Cmnd_Alias LOCATE = /usr/bin/updatedb
         Cmnd_Alias STORAGE = /usr/sbin/fstrim, /usr/bin/mount, /usr/bin/umount, /usr/sbin/auditctl, /usr/sbin/smartctl
         Cmnd_Alias PROCESSES = /usr/bin/nice, /usr/bin/kill, /usr/bin/kill, /usr/bin/killall, /usr/bin/pkill
-        Cmnd_Alias DEVELOPMENT = /usr/bin/podman, /usr/sbin/lvcreate, /usr/sbin/dmidecode
-        lzap ALL=(ALL) NOPASSWD: SOFTWARE,NETWORKING,SERVICES,LOCATE,PROCESSES,DEVELOPMENT,STORAGE
+        lzap ALL = NOPASSWD: SOFTWARE,NETWORKING,SERVICES,LOCATE,PROCESSES,STORAGE
+        lzap ALL = (ALL) ALL
       dest: /etc/sudoers.d/lzap
+
+  - name: Remove nano editor
+    ansible.builtin.package:
+      name:
+        - nano-default-editor
+      state: absent
 
   - name: Essential packages
     ansible.builtin.package:
       name:
+        - subscription-manager
         - vim-enhanced
+        - vim-default-editor
         - mosh
         - tuned
         - autojump
         - direnv
         - git-xcleaner
         - the_silver_searcher
+        - krb5-workstation
+        - krb5-pkinit
+        - fedora-packager
+        - fedora-packager-kerberos
+        - git
+        - tig
+        - mc
+        - httpd
+        - java-latest-openjdk # fleet needs that
+        - golang
       state: latest
 
-  - name: Tuned guest profile
-    import_role:
-      name: linux-system-roles.tuned
-    vars:
-      profile: virtual-guest
+  # can be replaced by mod_journald in 2.5+
+  - name: Apache journal logging config
+    copy:
+      content: |
+        LogFormat "%h \"%r\" %>s %b" journal
+        CustomLog "|/usr/bin/logger -t httpd -p local7.info" journal
+      dest: /etc/httpd/conf.d/journald.conf
+    notify:
+      - Restart httpd
+
+  - name: Disable httpd logging to /var/log
+    ansible.builtin.replace:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^\s*CustomLog'
+      replace: '#CustomLog'
+    notify:
+      - Restart httpd
+
+  - name: Disable httpd error logging to /var/log
+    ansible.builtin.replace:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^\s*ErrorLog'
+      replace: '#ErrorLog'
+    notify:
+      - Restart httpd
+
+  - name: Tuned profile
+    copy:
+      content: |
+        virtual-guest
+      dest: /etc/tuned/active_profile
+    notify:
+      - Restart tuned
 
   - name: Cockpit
     import_role:
@@ -107,3 +272,14 @@
           - cockpit
           - mosh
         state: enabled
+
+  handlers:
+  - name: Restart httpd
+    ansible.builtin.service:
+      name: httpd
+      state: restarted
+
+  - name: Restart tuned
+    ansible.builtin.service:
+      name: tuned
+      state: restarted
