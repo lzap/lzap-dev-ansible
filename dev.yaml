@@ -23,21 +23,18 @@
       journald_rate_limit_interval_sec: 0
       journald_rate_limit_burst: 0
 
-  - name: Shell environment config
+  - name: Shell global environment config
     copy:
       content: |
         shopt -s histappend
-        eval "$(direnv hook bash)"
         alias v="vim -v"
         alias vi="vim -v"
         alias vim="vim -v"
         alias g="git"
-        alias gd="git diff"
-        alias gg="clear && git status -sb"
+        alias gd=" git diff"
+        alias gg=" clear && git status -sb"
         alias hh=' history -a; history -n'
-        alias qq="cd ~/1Download"
-        alias ww="cd ~/work"
-        alias cdn='cd $(ls -c | head -n1)'
+        alias cdn=' cd $(ls -c | head -n1)'
         alias dnf="sudo /usr/bin/dnf"
         alias ys="sudo /usr/bin/dnf search"
         alias yi="sudo /usr/bin/dnf install"
@@ -47,10 +44,6 @@
         alias yr="sudo /usr/bin/dnf remove"
         alias yyr="sudo /usr/bin/dnf -y remove"
         alias ypr="sudo /usr/bin/dnf whatprovides"
-        alias journalctl="sudo /usr/bin/journalctl"
-        alias vim-bashrc="vim ~/.bashrc; source ~/.bashrc"
-        alias vim-bashprofile="vim ~/.bash_profile; source ~/.bash_profile"
-        alias vim-vimrc="vim ~/.vimrc"
       dest: /etc/profile.d/lzap.sh
 
   - name: Bash profile drop dir
@@ -60,6 +53,18 @@
       owner: lzap
       group: lzap
       mode: '0755'
+
+  - name: Bash profile - aliases
+    copy:
+      content: |
+        eval "$(direnv hook bash)"
+        alias journalctl="sudo /usr/bin/journalctl"
+        alias vim-bashrc="vim ~/.bashrc; source ~/.bashrc"
+        alias vim-bashprofile="vim ~/.bash_profile; source ~/.bash_profile"
+        alias vim-vimrc="vim ~/.vimrc"
+      dest: /home/lzap/.bashrc.d/go.sh
+      owner: lzap
+      group: lzap
 
   - name: Bash profile - Go
     copy:
@@ -187,8 +192,8 @@
         Cmnd_Alias LOCATE = /usr/bin/updatedb
         Cmnd_Alias STORAGE = /usr/sbin/fstrim, /usr/bin/mount, /usr/bin/umount, /usr/sbin/auditctl, /usr/sbin/smartctl
         Cmnd_Alias PROCESSES = /usr/bin/nice, /usr/bin/kill, /usr/bin/kill, /usr/bin/killall, /usr/bin/pkill
-        lzap ALL = NOPASSWD: SOFTWARE,NETWORKING,SERVICES,LOCATE,PROCESSES,STORAGE
         lzap ALL = (ALL) ALL
+        lzap ALL = NOPASSWD: SOFTWARE,NETWORKING,SERVICES,LOCATE,PROCESSES,STORAGE
       dest: /etc/sudoers.d/lzap
 
   - name: Remove nano editor
@@ -215,8 +220,11 @@
         - fedora-packager-kerberos
         - git
         - tig
+        - gh
         - mc
         - httpd
+        - postgresql-server
+        - postgresql-contrib
         - java-latest-openjdk # fleet needs that
         - golang
       state: latest
